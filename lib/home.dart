@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:moqat7a/components/animation_bg.dart';
+import 'package:moqat7a/components/product_container.dart';
 import 'package:moqat7a/model/ProductModel.dart';
+
+import 'components/search_widget.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -9,92 +13,62 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final controller = TextEditingController();
+  List<productModel> productsList = products;
+  bool isEmpty = false;
+  Future<void> searchForProducts(String value) async {
+    productsList = products
+        .where((element) =>
+            element.prod_name_ar.toLowerCase().contains(value.toLowerCase()) ||
+            element.prod_name_en.toLowerCase().contains(value.toLowerCase()))
+        .toList();
+    isEmpty = productsList.isEmpty;
+    setState(() {});
+  }
+
   List<productModel> prod = products;
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            TextField(
-                onChanged: search,
-                controller: controller,
-                cursorColor: Colors.red,
-                decoration: InputDecoration(
-                  hintText: 'Search',
-                  disabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide(width: 20, color: Colors.teal)),
-                  focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25),
-                      borderSide: BorderSide(color: Colors.red)),
-                  prefixIcon: Icon(Icons.search),
-                  border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(25)),
-                )),
-            Expanded(
-              child: ListView.builder(
-                itemCount: products.length,
-                shrinkWrap: true,
-                itemBuilder: (context, index) {
-                  final prod = products[index];
-                  return Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Container(
-                      height: 70,
-                      decoration: BoxDecoration(
-                          color: const Color.fromARGB(95, 166, 20, 9),
-                          borderRadius: BorderRadius.circular(20)),
-                      child: Row(
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Container(
-                                decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(100)),
-                                width: 50,
-                                clipBehavior: Clip.antiAliasWithSaveLayer,
-                                child: Image.asset(
-                                  prod.prod_img,
-                                )),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 100),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                Text(prod.prod_name_ar,
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 20)),
-                                Text(prod.prod_name_en,
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 20)),
-                              ],
+            const AnimationBg(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  SearchWidget(
+                    onChanged: (val) {
+                      searchForProducts(val);
+                    },
+                  ),
+                  isEmpty
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'اللي بتدور عليه مش في المقاطعه',
+                              style: TextStyle(color: Colors.black),
                             ),
-                          )
-                        ],
-                      ),
-                    ),
-                  );
-                },
+                          ],
+                        )
+                      : Expanded(
+                          child: ListView.builder(
+                            itemCount: productsList.length,
+                            shrinkWrap: true,
+                            itemBuilder: (context, index) {
+                              final prod = productsList[index];
+                              return ProductContainer(prod: prod);
+                            },
+                          ),
+                        ),
+                ],
               ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  void search(String query) {
-    final find = products.where((prod) {
-      final prodname = prod.prod_name_en.toLowerCase();
-      final input = query.toLowerCase();
-      return prodname.contains(input);
-    }).toList();
-   
-      setState(() => prod = find);
-    
   }
 }
